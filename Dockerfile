@@ -1,4 +1,3 @@
-%%writefile backend_files/Dockerfile
 FROM python:3.10-slim
 
 WORKDIR /app

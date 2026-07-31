@@ -1,12 +1,15 @@
+import joblib
+import pandas as pd
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 # Initialize Flask app
 superkart_api = Flask("SuperKart Sales Forecast API")
+CORS(superkart_api)
 
 # Load the trained model pipeline (includes encoder + model)
-# NOTE: In Hugging Face Space, the model is placed in the repo root (same folder as app.py)
-# As such the following line of code does not contain 'backend_files/' in HF
-model = joblib.load("backend_files/superkart_rf_sales_forecast_v1_0.joblib")
+# The model file is copied into the app root by Dockerfile.
+model = joblib.load("superkart_rf_sales_forecast_v1_0.joblib")
 
 FEATURES = [
     "Product_Id",
@@ -54,7 +57,5 @@ def predict_batch():
 
     return jsonify({"predictions": preds})
 
-RUN_LOCAL_FLASK = False  # set to True only when you want to run the server in Colab
-
-if __name__ == "__main__" and RUN_LOCAL_FLASK:
-    superkart_api.run(host="0.0.0.0", port=7860, debug=True)
+if __name__ == "__main__":
+    superkart_api.run(host="0.0.0.0", port=7860, debug=False)
