@@ -1,4 +1,3 @@
-%%writefile frontend_files/app.py
 import requests
 import streamlit as st
 import pandas as pd
