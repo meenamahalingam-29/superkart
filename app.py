@@ -12,18 +12,26 @@ CORS(superkart_api)
 model = joblib.load("superkart_rf_sales_forecast_v1_0.joblib")
 
 FEATURES = [
-    "Product_Id",
-    "Product_Weight",
-    "Product_Sugar_Content",
-    "Product_Allocated_Area",
-    "Product_Type",
-    "Product_MRP",
-    "Store_Id",
+    "Store_Type",
     "Store_Size",
     "Store_Location_City_Type",
-    "Store_Type",
-    "Store_Age"
+    "Product_Sugar_Content",
+    "Store_Id",
+    "Product_Type_Category",
+    "Product_Weight",
+    "Product_Allocated_Area",
+    "Product_MRP",
+    "Store_Age_Years"
 ]
+
+def prepare_payload(payload):
+    # Derive model input fields from user-friendly payload keys
+    if "Product_Type_Category" not in payload and "Product_Type" in payload:
+        payload["Product_Type_Category"] = payload["Product_Type"]
+    if "Store_Age_Years" not in payload and "Store_Age" in payload:
+        payload["Store_Age_Years"] = payload["Store_Age"]
+
+    return {feat: payload[feat] for feat in FEATURES}
 
 @superkart_api.get("/")
 def home():
@@ -32,6 +40,7 @@ def home():
 @superkart_api.post("/v1/predict")
 def predict_single():
     payload = request.get_json()
+    payload = prepare_payload(payload)
 
     # Create one-row dataframe in the exact feature order
     sample = {feat: payload[feat] for feat in FEATURES}
@@ -46,6 +55,12 @@ def predict_batch():
     # Expect a CSV file with the same feature columns
     file = request.files["file"]
     input_df = pd.read_csv(file)
+
+    # Derive any missing required columns from user-friendly names
+    if "Product_Type_Category" not in input_df.columns and "Product_Type" in input_df.columns:
+        input_df["Product_Type_Category"] = input_df["Product_Type"]
+    if "Store_Age_Years" not in input_df.columns and "Store_Age" in input_df.columns:
+        input_df["Store_Age_Years"] = input_df["Store_Age"]
 
     # Ensure required columns exist
     missing = [c for c in FEATURES if c not in input_df.columns]

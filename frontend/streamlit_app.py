@@ -1,13 +1,15 @@
-%%writefile frontend_files/app.py
+import os
 import requests
 import streamlit as st
 import pandas as pd
 
+API_BASE_URL = os.getenv("API_BASE_URL", "http://host.docker.internal:7860")
+
 st.title("SuperKart Sales Forecast")
+st.caption(f"Using API base URL: {API_BASE_URL}")
 
 st.subheader("Single Product Sales Prediction")
 
-# Input fields
 Product_Id = st.text_input("Product_Id", value="FDX07")
 Product_Weight = st.number_input("Product_Weight", value=12.5)
 Product_Sugar_Content = st.selectbox("Product_Sugar_Content", ["Regular", "Low sugar", "No sugar"])
@@ -53,7 +55,7 @@ payload = {
 
 if st.button("Predict Sales", type="primary"):
     response = requests.post(
-        "https://upgraded-chainsaw-4qgwrjqpw7wjhj5pw-7860.app.github.dev/v1/predict",
+        f"{API_BASE_URL}/v1/predict",
         json=payload
     )
     if response.status_code == 200:
@@ -61,7 +63,7 @@ if st.button("Predict Sales", type="primary"):
         prediction = result["Predicted_Product_Store_Sales_Total"]
         st.success(f"Predicted Product_Store_Sales_Total: {prediction}")
     else:
-        st.error("Error in API request")
+        st.error(f"API error {response.status_code}: {response.text}")
 
 st.divider()
 
@@ -71,7 +73,7 @@ file = st.file_uploader("Upload CSV file", type=["csv"])
 if file is not None:
     if st.button("Predict Batch", type="primary"):
         response = requests.post(
-            "https://upgraded-chainsaw-4qgwrjqpw7wjhj5pw-7860.app.github.dev/v1/predictbatch",
+            f"{API_BASE_URL}/v1/predictbatch",
             files={"file": file.getvalue()}
         )
         if response.status_code == 200:
@@ -79,4 +81,4 @@ if file is not None:
             st.header("Batch Prediction Results")
             st.write(result)
         else:
-            st.error("Error in API request")
+            st.error(f"API error {response.status_code}: {response.text}")
